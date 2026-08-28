@@ -16,12 +16,22 @@ import type { WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     /**
+     * Additive content before the unchanged Workspace/Session browser. Entries
+     * receive the same wide/rail state and expansion action as that browser.
+     */
+    'sidebar.before.workspaces': { kind: 'list'; scope: 'root'; owner: SidebarSectionOwnerProps }
+    /**
      * The workspace/session browsing region: section header, search, the
      * grouped/flat session list, and every workspace dialog. Declared by this
      * package's 'sidebar' entry (declaring is claiming); ui-workspace
      * registers the browser.
      */
     'sidebar.workspaces': { kind: 'single'; scope: 'root'; owner: SidebarSectionOwnerProps }
+    /**
+     * Additive content after the unchanged Workspace/Session browser. Entries
+     * receive the same wide/rail state and expansion action as that browser.
+     */
+    'sidebar.after.workspaces': { kind: 'list'; scope: 'root'; owner: SidebarSectionOwnerProps }
     /**
      * The settings seat at the sidebar foot. Declared by this package's
      * 'sidebar' entry; ui-settings registers its trigger row + modal panel.
@@ -85,5 +95,11 @@ export type SidebarRootInjected = {
  */
 export type SidebarRootComponentProps =
   PropsRuntime<'sidebar'>
-  & PropsRenderSlots<'sidebar.workspaces' | 'sidebar.settings' | 'sidebar.footer.action'>
+  & PropsRenderSlots<
+    | 'sidebar.before.workspaces'
+    | 'sidebar.workspaces'
+    | 'sidebar.after.workspaces'
+    | 'sidebar.settings'
+    | 'sidebar.footer.action'
+  >
   & SidebarRootInjected & PropsLocale<'sidebar'>

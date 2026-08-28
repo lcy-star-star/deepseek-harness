@@ -20,6 +20,7 @@ import type { InputNotice } from './input/contract.ts'
 import { createChatStore } from './stores.ts'
 import { ConversationController, UnsupportedImageMediaTypeError } from './service.ts'
 import type { IConversation } from './service.ts'
+import { ConversationNavigationController } from './navigation.ts'
 import { ComposerBlockRegistry } from './input/blocks.ts'
 import type { ComposerBlock } from './input/blocks.ts'
 import { InputHub } from './input/hub.ts'
@@ -117,6 +118,10 @@ export function apply(ctx: Context): void {
   const workspaces = ctx.workspaces
   const layout = ctx.layout
   const slots = ctx.slots
+  const navigation = new ConversationNavigationController(ctx, {
+    sessions,
+    hasView: viewId => slots.entries('conversation.view').some(entry => entry.options.id === viewId),
+  })
 
   registerConversationNodes(ctx)
   registerChatNodeRenderers(ctx)
@@ -242,7 +247,8 @@ export function apply(ctx: Context): void {
       'conversation.view': { kind: 'list', scope: 'session' },
     },
     store: chatStore,
-    inject: (sessionId: SessionId, _actions: BoundActions<typeof chatStore>): ConversationSessionInjected => {
+    inject: (sessionId: SessionId, actions: BoundActions<typeof chatStore>): ConversationSessionInjected => {
+      navigation.bind(sessionId, actions.setView)
       const conversation = concreteConversation(ctx)
       return {
         views,
@@ -446,10 +452,16 @@ export function apply(ctx: Context): void {
     locale: NS,
     children: {
       'conversation.details.tool': { kind: 'single', scope: 'session' },
+      'conversation.details.auxiliary': { kind: 'single', scope: 'session' },
     },
     store: chatStore,
-    inject: (): DetailsInjected => ({
-      closeDetails: () => { layout.closeDetails() },
+    inject: (_sessionId: SessionId, actions: BoundActions<typeof chatStore>): DetailsInjected => ({
+      closeDetails: () => {
+        if (slots.entries('conversation.details.auxiliary').length > 0) actions.select(null)
+        layout.closeDetails()
+      },
+      showAuxiliary: () => { actions.select(null) },
+      hasAuxiliary: slots.entries('conversation.details.auxiliary').length > 0,
     }),
   }, DetailsPanel)
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type { SettingsRootComponentProps } from '../src/client/shell-contract.ts'
 import { SettingsRoot } from '../src/client/SettingsRoot.tsx'
+import type { ISettingsNavigation, SettingsNavigationSnapshot } from '../src/client/navigation.ts'
 
 afterEach(cleanup)
 
@@ -49,6 +50,21 @@ function mount({
       byId: { 'active-session': { blank: false } },
     })) as never
   const unusedHook = (() => { throw new Error('unused by SettingsRoot') }) as never
+  let navigationSnapshot: SettingsNavigationSnapshot = Object.freeze({ open: false })
+  const navigationListeners = new Set<() => void>()
+  const publishNavigation = (snapshot: SettingsNavigationSnapshot) => {
+    navigationSnapshot = Object.freeze(snapshot)
+    for (const listener of [...navigationListeners]) listener()
+  }
+  const navigation: ISettingsNavigation = {
+    getSnapshot: () => navigationSnapshot,
+    subscribe: (listener) => {
+      navigationListeners.add(listener)
+      return () => { navigationListeners.delete(listener) }
+    },
+    open: (sectionId) => { publishNavigation({ open: true, ...(sectionId === undefined ? {} : { sectionId }) }) },
+    close: () => { publishNavigation({ open: false }) },
+  }
   const props: SettingsRootComponentProps = {
     useSessions,
     useWorkspaces: unusedHook,
@@ -64,6 +80,7 @@ function mount({
       return select(current)
     },
     renderSlot,
+    navigation,
   }
   const view = render(<SettingsRoot {...props} />)
   const bump = (next: Row[]) => {
@@ -72,7 +89,7 @@ function mount({
       for (const fn of [...listeners]) fn()
     })
   }
-  return { view, renderSlot, bump, listeners }
+  return { view, renderSlot, bump, listeners, navigation }
 }
 
 function openPanel() {
@@ -162,6 +179,13 @@ describe('SettingsPanel close paths', () => {
 })
 
 describe('SettingsPanel navigation', () => {
+  it('opens a contributed section through the shared navigation service', () => {
+    const { navigation } = mount()
+    act(() => { navigation.open('models') })
+    expect(screen.getByRole('dialog')).toBeTruthy()
+    expect(screen.getByTestId('section-models')).toBeTruthy()
+  })
+
   it('projects rows, marks the first active, and renders only that section', () => {
     mount()
     openPanel()

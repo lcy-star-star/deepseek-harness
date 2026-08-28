@@ -164,6 +164,7 @@ export function AppFrame({
   return (
     <div
       ref={frameRef}
+      data-dsh-layout-frame
       className={css.frame}
       style={{ gridTemplateColumns: `${cols.sidebar}px minmax(0, 1fr) ${cols.details}px` }}
       data-sidebar-collapsed={sidebarCollapsed || undefined}

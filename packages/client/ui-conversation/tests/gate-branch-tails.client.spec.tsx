@@ -42,7 +42,8 @@ const SessionProviderStub: SessionProviderComponent = ({ children }) => children
 
 /** Observe the owner currency without importing the Tool details renderer. */
 function renderToolDetailsProbe(owners?: DetailsToolOwnerProps[]): DetailsSlotProps['renderSlot'] {
-  return (_key, owner) => {
+  return (key, owner) => {
+    if (key === 'conversation.details.auxiliary') return <div data-testid="auxiliary-details-seat" />
     owners?.push(owner as unknown as DetailsToolOwnerProps)
     return <div data-testid="tool-details-seat" />
   }
@@ -136,6 +137,8 @@ describe('render branch tails', () => {
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
         closeDetails={vi.fn()}
+        showAuxiliary={vi.fn()}
+        hasAuxiliary
         t={t}
       />,
     )
@@ -193,6 +196,8 @@ describe('render branch tails', () => {
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
         closeDetails={vi.fn()}
+        showAuxiliary={vi.fn()}
+        hasAuxiliary
         t={t}
       />,
     )

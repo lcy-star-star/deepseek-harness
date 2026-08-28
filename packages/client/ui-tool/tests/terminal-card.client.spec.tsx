@@ -475,6 +475,8 @@ describe('DetailsPanel Output section', () => {
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
         closeDetails={vi.fn()}
+        showAuxiliary={vi.fn()}
+        hasAuxiliary={false}
         t={t}
       />,
     )
@@ -661,6 +663,8 @@ describe('DetailsPanel Output section', () => {
         useStore={bindSnapshotSelector(chat)}
         actions={chat.actions}
         closeDetails={closeDetails}
+        showAuxiliary={vi.fn()}
+        hasAuxiliary={false}
         t={t}
       />,
     )

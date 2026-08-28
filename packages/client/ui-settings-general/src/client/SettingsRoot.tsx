@@ -5,12 +5,12 @@
  * close label, sections) arrives from registrants through slots; accessible
  * names resolve to that content (trigger: its own text; dialog:
  * aria-labelledby the title node; close: visually-hidden slot text). Modal
- * open state and the active section id are component-local viewing state;
- * the onboarding coordinator mounts exactly one ordered registrant while the
+ * open state and the active section id come from the shared navigation
+ * service; the onboarding coordinator mounts exactly one ordered registrant while the
  * sessions-derived empty-Hero fact is active. Visible dialog chrome belongs
  * to the step, so a mounted-but-deciding step paints nothing here.
  */
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import clsx from 'clsx'
 import {
   IconAgentPresetOutline16, IconCloseOutline16, IconDataOutline16,
@@ -102,18 +102,11 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
  * @returns the settings shell element tree.
  */
 export function SettingsRoot(props: SettingsRootComponentProps) {
-  const { wide, useSections, useOnboardingSteps, useSessions, renderSlot } = props
-  const [open, setOpen] = useState(false)
-  const [activeId, setActiveId] = useState<string | undefined>(undefined)
+  const { wide, useSections, useOnboardingSteps, useSessions, renderSlot, navigation } = props
+  const subscribeNavigation = useCallback((listener: () => void) => navigation.subscribe(listener), [navigation])
+  const readNavigation = useCallback(() => navigation.getSnapshot(), [navigation])
+  const navigationState = useSyncExternalStore(subscribeNavigation, readNavigation)
   const [completedOnboarding, setCompletedOnboarding] = useState<ReadonlySet<string>>(() => new Set())
-  const close = useCallback(() => {
-    setOpen(false)
-    setActiveId(undefined)
-  }, [])
-  const openSection = useCallback((id: string) => {
-    setActiveId(id)
-    setOpen(true)
-  }, [])
 
   // The ledger tick keeps the nav rows fresh: registrants re-register with
   // freshly localized text on locale change, and the trigger/header/close
@@ -145,18 +138,18 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
         type="button"
         className={clsx(css.trigger, !wide && css.rail)}
         aria-haspopup="dialog"
-        aria-expanded={open}
-        onClick={() => { setOpen(true) }}
+        aria-expanded={navigationState.open}
+        onClick={() => { navigation.open() }}
       >
         {renderSlot('settings.trigger', { wide })}
       </button>
-      {open && (
+      {navigationState.open && (
         <SettingsPanel
           rows={rows}
           renderSlot={renderSlot}
-          activeId={activeId}
-          onSelect={setActiveId}
-          onClose={close}
+          activeId={navigationState.sectionId}
+          onSelect={(id) => { navigation.open(id) }}
+          onClose={() => { navigation.close() }}
         />
       )}
       {/* Dialog chrome and `#root` inert ownership live inside each step's
@@ -165,7 +158,7 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
       {onboardingStep !== undefined && renderSlot('settings.onboarding', {
         stepId: onboardingStep.id,
         complete: () => { completeOnboardingStep(onboardingStep.id) },
-        openSection,
+        openSection: (id) => { navigation.open(id) },
       }, { only: onboardingStep.id })}
     </>
   )

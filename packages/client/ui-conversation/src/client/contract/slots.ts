@@ -123,6 +123,18 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
      */
     'conversation.details.tool': { kind: 'single'; scope: 'session'; owner: DetailsToolOwnerProps }
     /**
+     * Optional whole-panel content shown while no Tool call is selected. The
+     * subtree stays mounted behind Tool Details so registrant-local scroll and
+     * selection state survives a temporary inspection. The owner supplies the
+     * existing layout close action; Session facts arrive through standard
+     * session props and the registrant's own injected services.
+     */
+    'conversation.details.auxiliary': {
+      kind: 'single'
+      scope: 'session'
+      owner: DetailsAuxiliaryOwnerProps
+    }
+    /**
      * The composer takeover chain: entries are selector-routed replacements
      * of the default InputBar. Declared by this package's 'conversation'
      * entry; the owner dispatches the {@link ComposerChainProps} currency and
@@ -376,6 +388,12 @@ export interface DetailsToolOwnerProps {
   block: ToolCallBlock
   /** Session workspace root for card cwd and relative-path display. */
   cwd?: string | undefined
+}
+
+/** Owner currency of the optional auxiliary details panel. */
+export interface DetailsAuxiliaryOwnerProps {
+  /** Close the details column through the existing layout state. */
+  closeDetails: () => void
 }
 
 /**
@@ -719,10 +737,14 @@ export type ChatViewSlotProps =
 export interface DetailsInjected {
   /** Close the details panel (layout geometry stays with ctx.layout). */
   closeDetails: () => void
+  /** Return from Tool Details to the mounted auxiliary panel. */
+  showAuxiliary: () => void
+  /** Whether the optional auxiliary seat currently has an occupant. */
+  hasAuxiliary: boolean
 }
 
-/** Full details-slot props: selection store, Tool output seat, injected close callback, and locale. */
-export type DetailsSlotProps = PropsRuntime<'details'> & PropsRenderSlots<'conversation.details.tool'>
+/** Full details-slot props: selection store, Tool and auxiliary seats, panel actions, and locale. */
+export type DetailsSlotProps = PropsRuntime<'details'> & PropsRenderSlots<'conversation.details.tool' | 'conversation.details.auxiliary'>
   & PropsStore<ChatStore> & DetailsInjected & PropsLocale<'conversation'>
 
 /** Owner share common to the hero / New-Session Workspace pickers. */

@@ -333,20 +333,58 @@ describe('conversation slot inject API', () => {
     unsub()
     await b.runtime.dispose()
   })
+
+  it('public navigation selects a registered view through the existing session store', async () => {
+    const b = await bench()
+    const { instance } = b.conversationApi(ROOT)
+    const off = b.slots.register(
+      { name: 'conversation.view', id: 'trajectory', order: 10, label: 'Trajectory' } as never,
+      (() => null) as never,
+    )
+    b.runtime.ctx.conversationNavigation.open(ROOT, 'trajectory')
+    expect(instance.store.getSnapshot().view).toBe('trajectory')
+    expect(() => { b.runtime.ctx.conversationNavigation.open(ROOT, 'missing') }).toThrow(/unknown view/)
+    off()
+    await b.runtime.dispose()
+  })
 })
 
 describe('details inject API', () => {
-  it('details injects the one layout callback; selection rides the shared store instead', async () => {
+  it('details preserves the default tool-only close behavior', async () => {
     const b = await bench()
     const entry = b.entryOf('details')
     const injected = (entry.inject as unknown as () => DetailsInjected)()
-    expect(Object.keys(injected)).toEqual(['closeDetails'])
+    expect(Object.keys(injected)).toEqual(['closeDetails', 'showAuxiliary', 'hasAuxiliary'])
+    expect(injected.hasAuxiliary).toBe(false)
     injected.closeDetails()
     expect(b.layoutFake.closeDetails).toHaveBeenCalledTimes(1)
     // The shared handle: details resolves the SAME instance conversation writes.
     const conv = b.runtime.storeOf('conversation.session', ROOT)
     const details = b.runtime.storeOf('details', ROOT)
     expect(details).toBe(conv)
+    await b.runtime.dispose()
+  })
+
+  it('auxiliary details returns from Tool Details without replacing the shared store', async () => {
+    const b = await bench()
+    const off = b.slots.register(
+      { name: 'conversation.details.auxiliary' } as never,
+      (() => null) as never,
+    )
+    const entry = b.entryOf('details')
+    const store = b.runtime.storeOf('details', ROOT) as ChatInstance
+    store.actions.select({ turnSeq: 1, callId: 'call-1' })
+    const injected = (entry.inject as unknown as (
+      sessionId: SessionId, actions: ChatActions,
+    ) => DetailsInjected)(ROOT, store.actions)
+    expect(injected.hasAuxiliary).toBe(true)
+    injected.showAuxiliary()
+    expect(store.store.getSnapshot().selection).toBeNull()
+    store.actions.select({ turnSeq: 2, callId: 'call-2' })
+    injected.closeDetails()
+    expect(store.store.getSnapshot().selection).toBeNull()
+    expect(b.layoutFake.closeDetails).toHaveBeenCalledOnce()
+    off()
     await b.runtime.dispose()
   })
 })

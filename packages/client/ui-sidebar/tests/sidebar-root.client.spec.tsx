@@ -25,6 +25,8 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
   const startSession = vi.fn()
   const toggleSidebar = vi.fn()
   let regionOwner: SidebarSectionOwnerProps | undefined
+  let beforeWorkspacesOwner: SidebarSectionOwnerProps | undefined
+  let afterWorkspacesOwner: SidebarSectionOwnerProps | undefined
   let settingsOwner: SidebarSettingsOwnerProps | undefined
   let footerActionOwner: SidebarFooterActionOwnerProps | undefined
   let current = { collapsed, width }
@@ -45,8 +47,19 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
           footerActionOwner = owner
           return <div data-testid="footer-action-seat" data-wide={owner.wide} />
         }
-        regionOwner = owner as SidebarSectionOwnerProps
-        return <div data-testid="region" data-wide={owner.wide} />
+        if (key === 'sidebar.workspaces') {
+          regionOwner = owner as SidebarSectionOwnerProps
+          return <div data-testid="region" data-wide={owner.wide} />
+        }
+        if (key === 'sidebar.before.workspaces') {
+          beforeWorkspacesOwner = owner as SidebarSectionOwnerProps
+          return <div data-testid="before-workspaces" />
+        }
+        if (key === 'sidebar.after.workspaces') {
+          afterWorkspacesOwner = owner as SidebarSectionOwnerProps
+          return <div data-testid="after-workspaces" />
+        }
+        return null
       }) as SidebarRootComponentProps['renderSlot']}
     />
   )
@@ -57,6 +70,14 @@ function mountShell({ collapsed = false, width = 300 }: { collapsed?: boolean; w
     regionOwner: () => {
       if (regionOwner === undefined) throw new Error('region owner not rendered')
       return regionOwner
+    },
+    beforeWorkspacesOwner: () => {
+      if (beforeWorkspacesOwner === undefined) throw new Error('before-workspaces owner not rendered')
+      return beforeWorkspacesOwner
+    },
+    afterWorkspacesOwner: () => {
+      if (afterWorkspacesOwner === undefined) throw new Error('after-workspaces owner not rendered')
+      return afterWorkspacesOwner
     },
     settingsOwner: () => {
       if (settingsOwner === undefined) throw new Error('settings owner not rendered')
@@ -91,8 +112,12 @@ describe('SidebarRoot shell', () => {
     // The settings seat rides the same wide flag (ui-settings renders the row).
     expect(b.settingsOwner().wide).toBe(true)
     expect(b.footerActionOwner().wide).toBe(true)
+    expect(screen.getByTestId('before-workspaces')).toBeTruthy()
+    expect(screen.getByTestId('after-workspaces')).toBeTruthy()
     // Expanded: the request is a no-op (no accidental collapse).
     b.regionOwner().expandSidebar()
+    b.beforeWorkspacesOwner().expandSidebar()
+    b.afterWorkspacesOwner().expandSidebar()
     expect(b.toggleSidebar).not.toHaveBeenCalled()
   })
 
@@ -108,7 +133,9 @@ describe('SidebarRoot shell', () => {
     expect(b.footerActionOwner().wide).toBe(false)
     expect(screen.getByTestId('region')).toBeTruthy()
     b.regionOwner().expandSidebar()
-    expect(b.toggleSidebar).toHaveBeenCalledOnce()
+    b.beforeWorkspacesOwner().expandSidebar()
+    b.afterWorkspacesOwner().expandSidebar()
+    expect(b.toggleSidebar).toHaveBeenCalledTimes(3)
   })
 
   it('renders statically collapsed on a cold start (no crossfade classes)', () => {

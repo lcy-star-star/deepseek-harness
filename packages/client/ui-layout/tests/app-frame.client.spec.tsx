@@ -140,6 +140,7 @@ describe('AppFrame', () => {
   it('renders three tracks from store state', () => {
     const { frame } = mountFrame()
     expect(tracks(frame)).toEqual([280, 0])
+    expect(frame.hasAttribute('data-dsh-layout-frame')).toBe(true)
   })
 
   it('renders the session pair with empty owner shares (sessionId is framework-standard)', () => {
