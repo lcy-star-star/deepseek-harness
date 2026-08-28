@@ -10,7 +10,7 @@ Status: implemented
 
 ## 决策
 
-`AppFrame` 从权威会话投影读取当前会话 id 及其摘要中的 `blank` 标志。它只在该会话能够拥有详情时记录最后一个选中的非 blank 会话 id，因此 hero 和其他未选中状态既不会触发关闭，也不会替换最后一个会话 owner；这些状态下，详情栏轨道的渲染宽度派生为零，但存储的首选宽度不变。首个会话保留布局 store 的初始首选值，其[已归档的可见性默认值决策](../../archived/bug-fix/2026-07-30-web-details-default-closed.md)选择关闭；返回同一会话时恢复其当前宽度；选择不同会话时，系统会先通过布局 store 关闭根作用域存储的详情栏首选宽度，再进行绘制。逐会话的聊天选中项继续由 [slot 体系标准](../architecture/2026-07-22-slot-type-chain-implementation.md)所述的会话作用域 store 拥有。
+`AppFrame` 从权威 Session 投影读取当前 Session id，并将任何已连接且已选择的 Session 记录为详情 owner。根据[显式详情修正](2026-08-29-explicit-details-on-blank-sessions.md)，已连接的 blank Session 可以拥有显式打开的辅助详情表面；没有当前 Session 的状态既不会触发关闭，也不会替换最后一个 Session owner，其详情栏轨道的渲染宽度派生为零，但存储的首选宽度不变。首个 Session 保留布局 store 的初始首选值，其[已归档的可见性默认值决策](../../archived/bug-fix/2026-07-30-web-details-default-closed.md)选择关闭；返回同一 Session 时恢复其当前宽度；选择不同 Session 时，系统会先通过布局 store 关闭根作用域存储的详情栏首选宽度，再进行绘制。逐 Session 的聊天选中项继续由 [slot 体系标准](../architecture/2026-07-22-slot-type-chain-implementation.md)所述的 Session 作用域 store 拥有。
 
 布局 store 是瞬时状态，详情栏在启动时保持关闭。它既不读取也不写入 `localStorage`，因此重新加载会恢复侧边栏默认值，并使详情栏保持关闭，无需会话基线例外。在同一个未变化的会话内手动关闭和重新打开详情栏，仍保持原有行为。该生命周期 effect 不改变 [Workspace 拥有的 New Session 动线](../feature/2026-07-25-workspace-ui-product-flow.md)、composer 草稿、会话导航或让步链缩放。
 
@@ -26,4 +26,4 @@ Status: implemented
 
 ## 后果
 
-详情栏在启动时保持关闭，首次会话物化时亦然。显式打开操作会使用约定默认宽度。切换到不同会话会忘记拖动后的详情宽度，因为关闭操作会写入零值，重新打开时则使用该默认值。未选中状态会将轨道的渲染宽度派生为零，同时保持首选几何信息不变；经由这些状态返回同一会话时，会恢复其宽度。重新加载会忘记侧边栏几何信息，并使详情栏恢复关闭状态。布局行为测试覆盖初始默认值、首次物化、直接及经 hero 中转的会话切换、返回同一会话，以及不存在布局存储的情况；无密钥浏览器 e2e 则通过已交付的组合驱动相同的 owner 过渡，同时检查完整网格轨道和浏览器错误。
+详情栏在启动时保持关闭，首次 Session 物化时亦然。对 blank 或非 blank 的已连接 Session，显式打开操作都会使用约定默认宽度。切换到不同 Session 会忘记拖动后的详情宽度，因为关闭操作会写入零值，重新打开时则使用该默认值。没有当前 Session 的状态会将轨道的渲染宽度派生为零，同时保持首选几何信息不变；经由这些状态返回同一 Session 时，会恢复其宽度。重新加载会忘记侧边栏几何信息，并使详情栏恢复关闭状态。布局行为测试覆盖初始默认值、在 blank Session 上显式打开、首次物化、直接及经 hero 中转的 Session 切换、返回同一 Session，以及不存在布局存储的情况；无密钥浏览器 e2e 则通过已交付的组合驱动相同的 owner 过渡，同时检查完整网格轨道和浏览器错误。

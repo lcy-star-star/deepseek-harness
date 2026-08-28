@@ -189,12 +189,12 @@ describe('AppFrame', () => {
     selectedSessionBlank.current = true
     act(() => { rerenderFrame() })
     expect(tracks(frame)).toEqual([280, 0])
-    expect(instance.getSnapshot().details).toBe(360)
+    expect(instance.getSnapshot().details).toBe(0)
 
     selectedSession.current = 's-next' as SessionId
     selectedSessionBlank.current = false
     act(() => { rerenderFrame() })
-    expect(tracks(frame)).toEqual([280, 360])
+    expect(tracks(frame)).toEqual([280, 0])
 
     selectedSession.current = undefined
     act(() => { rerenderFrame() })
@@ -213,6 +213,16 @@ describe('AppFrame', () => {
     selectedSession.current = 's-first' as SessionId
     act(() => { rerenderFrame() })
     expect(tracks(frame)).toEqual([280, 0])
+  })
+
+  it('honors an explicit details open for a connected blank Session', () => {
+    selectedSession.current = 's-blank' as SessionId
+    selectedSessionBlank.current = true
+    const { frame, instance } = mountFrame()
+    expect(tracks(frame)).toEqual([280, 0])
+
+    act(() => { instance.actions.openDetails() })
+    expect(tracks(frame)).toEqual([280, 360])
   })
 
   it('sidebar slot receives live concession output as owner props', () => {

@@ -91,10 +91,9 @@ export function AppFrame({
   renderSlot,
 }: AppFrameProps) {
   const panels = useStore(s => s)
-  const detailsSession = useSessions((s) => {
-    const current = s.current
-    return current !== undefined && s.byId[current]?.blank === false ? current : undefined
-  })
+  // A connected blank Session can own an explicitly opened auxiliary details
+  // surface; absence of a current Session remains the only ownerless state.
+  const detailsSession = useSessions(s => s.current)
   const frameRef = useRef<HTMLDivElement | null>(null)
   const [viewport, setViewport] = useState(() => window.innerWidth)
 
