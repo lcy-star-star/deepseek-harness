@@ -1,5 +1,28 @@
 .callRow {
+  position: relative;
+  padding-right: 44px;
   border-radius: 6px;
+}
+
+.detailsButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 36px;
+  height: 24px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--dsw-alias-label-secondary);
+  background: transparent;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.detailsButton:hover,
+.detailsButton:focus-visible {
+  color: var(--dsw-alias-label-primary);
+  background: var(--dsw-alias-interactive-bg-hover-solid);
 }
 
 .subCalls {

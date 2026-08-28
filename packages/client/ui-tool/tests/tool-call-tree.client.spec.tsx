@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** ToolCallTree-owned root/subcall markers and selection projection. */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import type { ConversationSnapshot, ToolResultNode } from '@deepseek-ai/dsh-client-runtime/client'
 import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
@@ -40,6 +40,7 @@ function props(
       data: { root: block },
     },
     selectedCallId,
+    openDetails: vi.fn(),
     openFile: vi.fn(),
     inspectCall: vi.fn(),
     forkAt: vi.fn(),
@@ -51,12 +52,15 @@ function props(
 describe('ToolCallTree', () => {
   it('owns the root marker, generic fallback, and selected state for a window-truncated call', () => {
     const block = root('w1', null)
-    const view = render(<ToolCallTree {...props(block, 'w1')} />)
+    const input = props(block, 'w1')
+    const view = render(<ToolCallTree {...input} />)
     const row = view.container.querySelector('[data-chat-call-id="w1"]')
     expect(row?.getAttribute('data-chat-anchor-key')).toBe('call:w1')
     expect(row?.getAttribute('data-selected')).toBe('true')
     expect(view.container.querySelector('[data-variant="others"]')).not.toBeNull()
     expect(view.getByText('w1')).toBeTruthy()
+    fireEvent.click(view.getByRole('button', { name: '查看工具详情' }))
+    expect(input.openDetails).toHaveBeenCalledWith({ turnSeq: 3, callId: 'w1', toolName: '' })
   })
 
   it('recursively renders a selected leaf without selecting its ancestors', () => {

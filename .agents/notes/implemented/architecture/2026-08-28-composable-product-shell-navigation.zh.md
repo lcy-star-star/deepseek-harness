@@ -18,6 +18,8 @@ Settings 外壳提供 `ctx.settingsNavigation`，作为此外壳既有打开状�
 
 详情外壳在既有 `conversation.details.tool` seat 旁声明可选的单实例 `conversation.details.auxiliary` seat。辅助子树会在所选工具调用覆盖它的期间保持挂载。「返回」通过共享聊天 store 清除工具选择，「关闭」则会先清除这份临时选择，再关闭既有详情面板。没有辅助注册方时，默认详情输出与控件保持不变。
 
+工具调用树为每个 root 和 child 调用暴露专用「详情」操作。它把调用 id、工具名称与 Conversation 锚点发送给既有 `ChatViewInjected.openDetails` 回调；该回调在共享 store 中选中调用，并打开既有面板。工具行保留行内展开手势，Inspect 保留其 Trajectory 导航行为。
+
 侧边栏声明名为 `sidebar.before.workspaces` 与 `sidebar.after.workspaces` 的可叠加列表 seat。它们接收与 `sidebar.workspaces` 相同的 `wide` 和 `expandSidebar` owner share，并在同一滚动区域内渲染。既有单实例 Workspace seat 保持原有含义与拥有方。
 
 AppFrame 在根节点暴露无行为的 `data-dsh-layout-frame` 标记。组装产品可将 CSS 限定到该标记，而无需导入私有 class。该标记不携带状态，也不改变布局行为。
@@ -38,8 +40,8 @@ AppFrame 在根节点暴露无行为的 `data-dsh-layout-frame` 标记。组装�
 
 ## Consequences
 
-客户端插件可以导航到内置 Trajectory 视图，打开内置 Models 或 Plugins 分区，把持久内容放在 Tool Details 后方，并在 Workspace 浏览器周围添加产品导航，而无需复制 Harness UI。没有插件使用这些新 seat 或服务时，默认组合在视觉与行为上保持不变。
+客户端插件可以导航到内置 Trajectory 视图，打开内置 Models 或 Plugins 分区，把持久内容放在 Tool Details 后方，并在 Workspace 浏览器周围添加产品导航，而无需复制 Harness UI。每个工具调用也会提供进入既有 Tool Details 面板的显式路径，且不会改变工具行的展开操作。
 
 Conversation 导航要求目标会话子树已经渲染，这与它所选择的 store 生命周期一致。Settings 导航可以在外壳读取目标分区之前接收目标 id；请求的注册缺席时，外壳会回退到当前第一行。辅助详情是单拥有方，因为面板只能呈现一个持久表层；两个侧边栏扩展 seat 则是有序列表。
 
-聚焦客户端测试覆盖控制器状态、非法目标、共享 store 选择、辅助详情与 Tool Details 切换、默认 Tool Details 行为、侧边栏 seat 顺序以及 AppFrame 标记。各包 README 以两种受支持语言记录这些公开服务与 slot。
+聚焦客户端测试覆盖控制器状态、非法目标、显式工具选择、共享 store 选择、辅助详情与 Tool Details 切换、默认 Tool Details 行为、侧边栏 seat 顺序以及 AppFrame 标记。各包 README 以两种受支持语言记录这些公开服务与 slot。

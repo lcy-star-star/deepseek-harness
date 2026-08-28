@@ -18,6 +18,8 @@ The Settings shell provides `ctx.settingsNavigation`, an observable controller f
 
 The details shell declares the optional single `conversation.details.auxiliary` seat beside the existing `conversation.details.tool` seat. An auxiliary subtree remains mounted while a selected Tool call covers it. Back clears the Tool selection through the shared chat store, and Close clears that temporary selection before closing the existing details panel. With no auxiliary registrant, the default details output and controls are unchanged.
 
+The Tool call tree exposes a dedicated Details action for every root and child call. It sends the call id, Tool name, and Conversation anchor to the existing `ChatViewInjected.openDetails` callback, which selects the call in the shared store and opens the existing panel. The Tool row keeps its inline-expansion gesture, while Inspect keeps its Trajectory navigation behavior.
+
 The sidebar declares additive list seats named `sidebar.before.workspaces` and `sidebar.after.workspaces`. They receive the same `wide` and `expandSidebar` owner share as `sidebar.workspaces` and render in the same scrolling region. The existing single Workspace seat keeps its meaning and owner.
 
 AppFrame exposes the inert `data-dsh-layout-frame` marker on its root. Composed products may scope CSS to that marker without importing a private class. The marker carries no state and does not alter layout behavior.
@@ -38,8 +40,8 @@ AppFrame exposes the inert `data-dsh-layout-frame` marker on its root. Composed 
 
 ## Consequences
 
-A client plugin can navigate to the built-in Trajectory view, open the built-in Models or Plugins section, place persistent content behind Tool Details, and add product navigation around the Workspace browser without copying Harness UI. Default composition remains visually and behaviorally unchanged when no plugin uses the new seats or services.
+A client plugin can navigate to the built-in Trajectory view, open the built-in Models or Plugins section, place persistent content behind Tool Details, and add product navigation around the Workspace browser without copying Harness UI. Every Tool call also provides an explicit route into the existing Tool Details panel without changing the row's expansion action.
 
 Conversation navigation requires the target Session subtree to have rendered, matching the lifetime of the store it selects. Settings navigation accepts a requested section id before that section is read by the shell; the shell falls back to its first current row if the requested registration is absent. Auxiliary details are single-owner because the panel can present only one persistent surface, while the two sidebar extension seats are ordered lists.
 
-Focused client tests cover controller state, invalid targets, shared-store selection, auxiliary-to-Tool transitions, default Tool Details behavior, sidebar seat ordering, and the AppFrame marker. Package READMEs document the public services and slots in both supported languages.
+Focused client tests cover controller state, invalid targets, explicit Tool selection, shared-store selection, auxiliary-to-Tool transitions, default Tool Details behavior, sidebar seat ordering, and the AppFrame marker. Package READMEs document the public services and slots in both supported languages.

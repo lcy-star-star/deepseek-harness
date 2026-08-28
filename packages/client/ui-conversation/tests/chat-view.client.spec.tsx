@@ -171,6 +171,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
     toolName: string
     block: ToolCallBlock
     selectedCallId: string | undefined
+    openDetails: ChatNodeOwnerProps['openDetails']
     openFile: ChatNodeOwnerProps['openFile']
     inspectCall: ChatNodeOwnerProps['inspectCall']
   }> = []
@@ -241,6 +242,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
           toolName,
           block,
           selectedCallId: nodeOwner.selectedCallId,
+          openDetails: nodeOwner.openDetails,
           openFile: nodeOwner.openFile,
           inspectCall: nodeOwner.inspectCall,
         }
@@ -600,11 +602,12 @@ describe('ChatView', () => {
     expect(view.queryByText('本轮运行失败')).toBeNull()
   })
 
-  it('hands the trajectory callback to the Tool seat', () => {
+  it('hands details and trajectory callbacks to the Tool seat', () => {
     const h = makeHarness({
       nodes: [toolResult(3, 'a')],
     })
     render(<h.ChatView {...h.props} />)
+    expect(h.toolOwners[0]?.openDetails).toBe(h.openDetails)
     expect(h.toolOwners[0]?.inspectCall).toBe(h.inspectCall)
   })
 

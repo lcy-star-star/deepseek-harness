@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-28-composable-product-shell-navigation.md
-2026-08-28-composable-product-shell-navigation.md: fe8f17806f0ad79f6148fd82acefb75837907bb5
-2026-08-28-composable-product-shell-navigation.zh.md: 410b574cdac00bfc66d3ced1a2eb3aabb3373571
+2026-08-28-composable-product-shell-navigation.md: e649032accaa03978a95d45069f61207925de499
+2026-08-28-composable-product-shell-navigation.zh.md: 8615772dc1c5218c62a073a483c3b6f4a3fdbd5b
