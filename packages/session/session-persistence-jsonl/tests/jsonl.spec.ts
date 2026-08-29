@@ -6,7 +6,9 @@ import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import type { Session, SessionEvent, SessionHeader } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import JsonlSessionPersistence, {
+  decodeJsonlSessionRawArtifact,
+} from '@deepseek-ai/dsh-session-persistence-jsonl'
 import {
   encodeSegment, eventLines, logPath, projectDir, projectKey, scanLog, sessionDir, SessionLogScanner, toHeaderLine,
 } from '../src/format.ts'
@@ -298,8 +300,19 @@ describe('JsonlSessionPersistence: durability and crash semantics', () => {
     // Byte-identical to the physical file — never a reconstruction.
     expect(raw!.content).toBe(await readFile(rawLogPath(root, '/work', m.id), 'utf8'))
     expect(raw!.content.split('\n')[0]).toBe(JSON.stringify(toHeaderLine(m)))
-    const scanned = scanLog(Buffer.from(raw!.content))
-    expect(scanned.events.map(event => event.type)).toEqual(oneTurnLog().map(event => event.type))
+    const decoded = decodeJsonlSessionRawArtifact(raw!.content)
+    expect(decoded.meta).toEqual(raw!.meta)
+    expect(decoded.events.map(event => event.type)).toEqual(oneTurnLog().map(event => event.type))
+  })
+
+  it('raw-artifact decoding rejects an incomplete event tail', async () => {
+    const m = meta('raw-incomplete', '/work')
+    await ctx.sessionPersistence.create(m)
+    await ctx.sessionPersistence.append(m.id, oneTurnLog())
+    const raw = await ctx.sessionPersistence.readRaw(m.id)
+
+    expect(() => decodeJsonlSessionRawArtifact(`${raw!.content}{"type":"turn/start"`))
+      .toThrow(/incomplete or non-contiguous tail/)
   })
 
   it('readRaw is undefined for an absent session', async () => {
@@ -1064,6 +1077,8 @@ describe('JsonlSessionPersistence: default packed chunk rows', () => {
 
     const loaded = await ctx.sessionPersistence.load(m.id)
     expect(loaded.events).toEqual(log)
+    const exported = await ctx.sessionPersistence.readRaw(m.id)
+    expect(decodeJsonlSessionRawArtifact(exported!.content).events).toEqual(log)
   })
 
   it('packChunks: false writes one event per line and still loads identical events', async () => {

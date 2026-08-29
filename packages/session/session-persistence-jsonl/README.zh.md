@@ -31,6 +31,8 @@ JSONL 持久会话存储后端：`SessionPersistence` 的一个具体实现（`d
 
 `locate(meta)` 返回已解析项目/会话目录内固定 transcript 的 `{ kind: 'jsonl', path }`。它不执行文件系统 I/O：可以在目录或文件存在前返回目标，现有文件也只包含最近一次 flush 完成的前缀。
 
+`decodeJsonlSessionRawArtifact(content)` 从 `readRaw(id).content` 校验并展开完整逻辑事件流，包括打包分片行。它会拒绝不完整或不连续的尾部，而不是执行持久化恢复，因此验证器无需访问后端存储根即可绑定导出的字节。
+
 ## 物理编码
 
 默认产物是独立 [Zstandard frame](../../../.agents/notes/implemented/architecture/2026-07-19-zstandard-jsonl-session-logs.md) 的标准拼接：一个仅包含 header 行的带 checksum frame，后跟每个持久 append 批次一个带 checksum frame。后端使用 Node 内置 Zstandard API 和默认压缩级别，不提供级别开关。列表只读取并验证 header frame。`compression: 'none'` 在原始表示中保留相同逻辑行。

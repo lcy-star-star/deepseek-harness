@@ -34,6 +34,24 @@ import { ensureDurableDirectoryWin32, publishNewFileWin32 } from './win32.ts'
 
 export type { JsonlCompression } from './format.ts'
 
+/**
+ * Decode the complete logical event stream from JSONL text returned by
+ * {@link SessionPersistence.readRaw}. Packed chunk rows are expanded through
+ * the same storage codec as ordinary backend reads. Unlike recovery-oriented
+ * backend loading, this decoder refuses any incomplete or non-contiguous tail.
+ *
+ * @param content - the complete UTF-8 JSONL artifact text.
+ * @returns the validated header and contiguous logical events.
+ */
+export function decodeJsonlSessionRawArtifact(content: string): SessionInspection {
+  const bytes = Buffer.from(content, 'utf8')
+  const decoded = scanLog(bytes)
+  if (decoded.committedBytes !== bytes.byteLength) {
+    throw new Error('corrupt session log: raw artifact has an incomplete or non-contiguous tail')
+  }
+  return { meta: decoded.meta, events: decoded.events }
+}
+
 const DEFAULT_PACK_CHUNKS = true
 const DEFAULT_COMPRESSION: JsonlCompression = 'zstd'
 /**
