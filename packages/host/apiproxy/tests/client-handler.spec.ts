@@ -368,7 +368,7 @@ describe('unary round trip', () => {
         init?.signal?.addEventListener('abort', () => { reject(new Error('aborted by timeout')) })
       }),
     }, 25)
-    await expect(never.sessions.list({})).rejects.toThrow()
+    await expect(never.host.describe({})).rejects.toThrow()
   })
 
   it('aborts a unary call through the caller-supplied external signal', async () => {
@@ -376,7 +376,7 @@ describe('unary round trip', () => {
     // works even when the transport ignores the signal entirely (hung impl).
     const gate = new AbortController()
     const hung = new InProcessApiClient({ fetch: () => new Promise<Response>(() => {}) }, 60_000)
-    const call = hung.sessions.list({}, gate.signal)
+    const call = hung.host.describe({}, gate.signal)
     gate.abort(new Error('externally aborted'))
     await expect(call).rejects.toThrow(/externally aborted/)
   })

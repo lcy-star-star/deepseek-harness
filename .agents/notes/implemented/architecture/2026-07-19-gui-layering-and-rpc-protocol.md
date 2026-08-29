@@ -204,7 +204,7 @@ The same domain tree as `ApiProxy`, but unary methods **take the business payloa
 | `callUnary` | mint → tap → POST full form → `serverResponseSchema` parse → **rpcId echo check** (mismatch throws) → tap → emit narrow form |
 | `readSse` | streaming fetch (not EventSource), `\n\n` framing, `data:` concatenation, ServerRequest full-form parse, tap, emit narrow `RpcRequest<frame>` |
 | `respond` | client-response passthrough (rpcId is an echo — never minted here); response body parsed by `rpcReceiptSchema` |
-| unary deadline | Ordinary unary calls use `AbortSignal.timeout` (default 30s, constructor-tunable); user-paced `host.pickDirectory` and `command.execute` omit that deadline but keep caller/connection cancellation; streams have no deadline |
+| unary deadline | Ordinary unary calls use `AbortSignal.timeout` (default 30s, constructor-tunable); durable-catalog `session.list` and user-paced `host.pickDirectory` and `command.execute` omit that deadline but keep caller/connection cancellation; streams have no deadline |
 | `resolveBase` | browser = same-origin origin; no-location environment (Node) = the `http://dsh.internal` fake authority |
 
 ### The instance-level envelope observation aspect
@@ -234,7 +234,7 @@ All four quadrant full forms pass through `onEnvelope`; the base implementation 
 
 ## Consequences
 
-Every client consumes one contract: adding a unary method is a five-step mechanical change from a single signature, swapping a carrier touches only a `doFetch` subclass, and every wire message is zod-validated, observable through the envelope tap, and reconcilable by rpcId. Ordinary unary calls remain bounded, while `host.pickDirectory` and `command.execute` may stay pending until the operation finishes or caller/connection cancellation arrives; this accepts that a non-cooperative user-paced operation can hang its request rather than treating valid operation duration as transport failure. The other accepted costs: two groups of packages need explicit tsconfig paths entries, and the reserved methods (fork/inject/task.list/listModels/hostInstanceId) stay dormant until a real consumer arrives.
+Every client consumes one contract: adding a unary method is a five-step mechanical change from a single signature, swapping a carrier touches only a `doFetch` subclass, and every wire message is zod-validated, observable through the envelope tap, and reconcilable by rpcId. Ordinary unary calls remain bounded, while `session.list`, `host.pickDirectory`, and `command.execute` may stay pending until the operation finishes or caller/connection cancellation arrives. The reconnect list preserves one complete durable-catalog baseline instead of treating corpus-scaled local reads as transport failure; the user-paced methods likewise preserve valid operation duration. A non-cooperative implementation can therefore leave one of these requests pending. The other accepted costs: two groups of packages need explicit tsconfig paths entries, and the reserved methods (fork/inject/task.list/listModels/hostInstanceId) stay dormant until a real consumer arrives.
 
 ## Alternatives considered
 
@@ -253,3 +253,4 @@ Every client consumes one contract: adding a unary method is a five-step mechani
 | Cursor resumption (implementing mux since) | Reconnect = rebuild (opencode-style) covers all v1 needs; the signature keeps the seat, implementation waits for a real consumer |
 | A createApiClient factory function (the original implementation) | Platform differences (transport/observation) are inheritance aspects, not parameters; the class family lets the fixture substitute at the protocol layer instead of wrapping a fake envelope |
 | Applying the 30-second transport deadline to `command.execute` | Command duration is operation work, not a transport-health budget; the deadline kills valid long-running handlers, while caller/connection cancellation already supplies the required stop path |
+| Applying the 30-second transport deadline to `session.list` | A complete reconnect baseline scans durable local history, so catalog size can make a healthy read exceed a fixed transport-health budget; caller and page/connection cancellation remain available |

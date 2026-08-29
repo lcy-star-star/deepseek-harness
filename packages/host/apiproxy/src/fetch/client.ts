@@ -410,7 +410,8 @@ export abstract class AbstractApiClient implements IApiClient {
   // ---- IApiClient API (arrow properties so destructured/passed references stay bound) ----
 
   readonly sessions: IApiClient['sessions'] = {
-    list: (payload, signal) => this.callUnary('session.list', payload, signal),
+    // The complete reconnect baseline scales with the durable Session catalog; callers own cancellation.
+    list: (payload, signal) => this.callUnary('session.list', payload, signal, 'caller-signal-only'),
     search: (payload, signal) => this.callUnary('session.search', payload, signal),
     create: (payload, signal) => this.callUnary('session.create', payload, signal),
     history: (payload, signal) => this.callUnary('session.history', payload, signal),

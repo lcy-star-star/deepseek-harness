@@ -62,7 +62,7 @@ The `settings.*`, `credentials.*`, and `llm.*` domains are the configuration-pag
 
 ## Carrier layer (`/client` + root)
 
-`AbstractApiClient` holds every protocol invariant — rpcId minting, envelope wrap/unwrap, zod parsing, SSE frame decoding, unary timeout, microtask-batched envelope observation (`subscribeEnvelopes`) — while platform subclasses supply only the `doFetch` transport aspect. `InProcessApiClient` over `toFetchHandler(api)` remains the isomorphic point for callers and carrier tests that need the full wire serialization/validation path without a network. Product `dsh --profile headless` is a direct core entry point and does not mount this package.
+`AbstractApiClient` holds every protocol invariant — rpcId minting, envelope wrap/unwrap, zod parsing, SSE frame decoding, unary timeout, microtask-batched envelope observation (`subscribeEnvelopes`) — while platform subclasses supply only the `doFetch` transport aspect. Ordinary unary calls use the default 30-second transport-health deadline. `session.list` instead follows caller cancellation because its complete reconnect baseline scans a durable catalog whose legitimate duration scales with local history; `host.pickDirectory` likewise follows caller cancellation because a native chooser is user-paced. `InProcessApiClient` over `toFetchHandler(api)` remains the isomorphic point for callers and carrier tests that need the full wire serialization/validation path without a network. Product `dsh --profile headless` is a direct core entry point and does not mount this package.
 
 ## Model Experience
 
